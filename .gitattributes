@@ -1,0 +1,2 @@
+# Use Beads merge driver for Beads JSONL files (configured via `bd setup`)
+.beads/issues.jsonl merge=beads
