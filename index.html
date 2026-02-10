@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aivokone</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    a {
+      display: block;
+      width: 50vh;
+      height: 50vh;
+      max-width: 80vw;
+      max-height: 80vw;
+      cursor: pointer;
+      transition: filter 0.2s ease;
+    }
+
+    a:hover {
+      filter: brightness(0.7);
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    path {
+      stroke: #000;
+      stroke-width: 3;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 400;
+      stroke-dashoffset: 400;
+      animation: draw 1.5s ease-out forwards;
+    }
+
+    @keyframes draw {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="mailto:hello@aivokone.fi" aria-label="Lähetä sähköpostia: hello@aivokone.fi">
+    <svg viewBox="0 0 100 120" role="img" aria-hidden="true">
+      <path d="M 20,110 L 50,10 L 80,110 M 30,70 L 70,70" />
+    </svg>
+  </a>
+</body>
+</html>
