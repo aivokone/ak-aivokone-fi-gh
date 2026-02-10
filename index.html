@@ -41,12 +41,12 @@
 
     path {
       stroke: #000;
-      stroke-width: 3;
+      stroke-width: 2.5;
       fill: none;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-dasharray: 400;
-      stroke-dashoffset: 400;
+      stroke-linecap: square;
+      stroke-linejoin: miter;
+      stroke-dasharray: 650;
+      stroke-dashoffset: 650;
       animation: draw 1.5s ease-out forwards;
     }
 
@@ -59,8 +59,11 @@
 </head>
 <body>
   <a href="mailto:hello@aivokone.fi" aria-label="Lähetä sähköpostia: hello@aivokone.fi">
-    <svg viewBox="0 0 100 120" role="img" aria-hidden="true">
-      <path d="M 20,110 L 50,10 L 80,110 M 30,70 L 70,70" />
+    <svg viewBox="0 0 100 130" role="img" aria-hidden="true">
+      <!-- Ulompi A -->
+      <path d="M 5,125 L 25,5 L 75,5 L 95,125 L 82,125 L 68,75 L 32,75 L 18,125 Z" />
+      <!-- Sisempi kolmio + poikkipalkki -->
+      <path d="M 50,20 L 38,68 L 62,68 Z M 35,73 L 35,80 L 65,80 L 65,73 Z" />
     </svg>
   </a>
 </body>
