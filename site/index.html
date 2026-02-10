@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aivokone</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    a {
+      display: block;
+      width: 50vh;
+      height: 50vh;
+      max-width: 80vw;
+      max-height: 80vw;
+      cursor: pointer;
+      transition: filter 0.2s ease;
+    }
+
+    a:hover {
+      filter: brightness(0.7);
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    path {
+      stroke: #000;
+      stroke-width: 3.5;
+      fill: none;
+      stroke-linecap: square;
+      stroke-linejoin: miter;
+      stroke-miterlimit: 4;
+      /* Hidden by default; JS sets exact values per path and animates. */
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+    }
+  </style>
+</head>
+<body>
+  <a href="mailto:hello@aivokone.fi" aria-label="Lähetä sähköpostia: hello@aivokone.fi">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" role="img" aria-hidden="true">
+      <!-- Ulkokehän "A" + ala-aukon lovi -->
+      <path id="a-outer" d="M 14,92 L 36,8 L 64,8 L 86,92 L 64,92 L 64,70 L 36,70 L 36,92 Z" />
+      <!-- Sisempi kolmio -->
+      <path id="a-inner" d="M 50,28 L 41,56 L 59,56 Z" />
+    </svg>
+  </a>
+
+  <script>
+    (() => {
+      const outer = document.getElementById('a-outer');
+      const inner = document.getElementById('a-inner');
+      if (!outer || !inner) return;
+
+      // Settings. Tweak these to change the feel.
+      const SETTINGS = {
+        draw: 2000,
+        wipe: 1000,
+        hold: 2000,
+        gap: 500,
+        // 0 = rigid, 1 = normal, 2 = very wonky
+        wonky: 1.2,
+        // 1 = perfectly symmetric, 0 = fully asymmetric
+        symmetry: 0.7,
+      };
+
+      const clamp01 = (n) => Math.min(1, Math.max(0, n));
+      const WONKY = Math.max(0, SETTINGS.wonky);
+      const ASYM = 1 - clamp01(SETTINGS.symmetry);
+      const J = (n) => n * WONKY; // general variation
+      const A = (n) => n * WONKY * ASYM; // symmetry-breaking variation
+
+      const prefersReducedMotion =
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      const rand = (min, max) => min + Math.random() * (max - min);
+      const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+      const fmt = (n) => String(Math.round(n * 100) / 100);
+      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+      function generateA() {
+        const centerX = 50 + rand(-J(3), J(3));
+        let topY = 8 + rand(-J(3), J(3));
+        let bottomY = 92 + rand(-J(3), J(3));
+
+        topY = clamp(topY, 4, 16);
+        bottomY = clamp(bottomY, 86, 96);
+
+        const legSpread = 72 + rand(-J(10), J(10));
+        const topSpread = 28 + rand(-J(7), J(7));
+        const notchWidth = 28 + rand(-J(12), J(12));
+        const notchHeight = 22 + rand(-J(10), J(10));
+        const lean = rand(-A(10), A(10));
+        const cornerJ = A(4);
+        const notchJ = A(4);
+        const innerJ = A(3);
+
+        let crossY = bottomY - notchHeight;
+        crossY = clamp(crossY + rand(-J(3), J(3)), topY + 28, bottomY - 12);
+
+        // Slight asymmetry: each corner gets its own jitter + a shared "lean".
+        let leftBottomX = centerX - legSpread / 2 + rand(-cornerJ, cornerJ);
+        let rightBottomX = centerX + legSpread / 2 + rand(-cornerJ, cornerJ);
+        let leftTopX = centerX - topSpread / 2 + rand(-cornerJ, cornerJ) + lean;
+        let rightTopX = centerX + topSpread / 2 + rand(-cornerJ, cornerJ) + lean;
+
+        leftBottomX = clamp(leftBottomX, 4, 42);
+        rightBottomX = clamp(rightBottomX, 58, 96);
+        leftTopX = clamp(leftTopX, 18, 48);
+        rightTopX = clamp(rightTopX, 52, 82);
+
+        if (leftTopX >= rightTopX - 8) {
+          const mid = (leftTopX + rightTopX) / 2;
+          leftTopX = mid - 12;
+          rightTopX = mid + 12;
+        }
+        if (leftBottomX >= rightBottomX - 12) {
+          const mid = (leftBottomX + rightBottomX) / 2;
+          leftBottomX = mid - 36;
+          rightBottomX = mid + 36;
+        }
+
+        let notchLeftX = centerX - notchWidth / 2 + rand(-notchJ, notchJ) + lean * 0.15;
+        let notchRightX = centerX + notchWidth / 2 + rand(-notchJ, notchJ) + lean * 0.15;
+
+        notchLeftX = clamp(notchLeftX, leftBottomX + 6, rightBottomX - 30);
+        notchRightX = clamp(notchRightX, notchLeftX + 18, rightBottomX - 6);
+
+        const outerD =
+          `M ${fmt(leftBottomX)},${fmt(bottomY)} ` +
+          `L ${fmt(leftTopX)},${fmt(topY)} ` +
+          `L ${fmt(rightTopX)},${fmt(topY)} ` +
+          `L ${fmt(rightBottomX)},${fmt(bottomY)} ` +
+          `L ${fmt(notchRightX)},${fmt(bottomY)} ` +
+          `L ${fmt(notchRightX)},${fmt(crossY)} ` +
+          `L ${fmt(notchLeftX)},${fmt(crossY)} ` +
+          `L ${fmt(notchLeftX)},${fmt(bottomY)} Z`;
+
+        let apexX = centerX + rand(-J(4), J(4)) + rand(-innerJ, innerJ) + lean * 0.1;
+        let apexY = topY + 20 + rand(-J(6), J(6));
+
+        apexX = clamp(apexX, leftTopX + 6, rightTopX - 6);
+        apexY = clamp(apexY, topY + 14, crossY - 24);
+
+        let baseY = crossY - 12 + rand(-J(6), J(6));
+        baseY = clamp(baseY, apexY + 10, crossY - 2);
+
+        const baseHalf = 9 + rand(-J(2.5), J(2.5));
+        let baseLeftX = apexX - baseHalf + rand(-innerJ, innerJ);
+        let baseRightX = apexX + baseHalf + rand(-innerJ, innerJ);
+
+        baseLeftX = clamp(baseLeftX, leftBottomX + 10, rightBottomX - 30);
+        baseRightX = clamp(baseRightX, baseLeftX + 10, rightBottomX - 10);
+
+        const innerD =
+          `M ${fmt(apexX)},${fmt(apexY)} ` +
+          `L ${fmt(baseLeftX)},${fmt(baseY)} ` +
+          `L ${fmt(baseRightX)},${fmt(baseY)} Z`;
+
+        return { outerD, innerD };
+      }
+
+      function setDash(path, len, offset) {
+        path.style.strokeDasharray = `${len} ${len}`;
+        path.style.strokeDashoffset = String(offset);
+      }
+
+      let currentAnimations = [];
+      function cancelAnimations() {
+        for (const anim of currentAnimations) {
+          try { anim.cancel(); } catch {}
+        }
+        currentAnimations = [];
+      }
+
+      async function loop() {
+        while (true) {
+          cancelAnimations();
+
+          const { outerD, innerD } = generateA();
+          outer.setAttribute('d', outerD);
+          inner.setAttribute('d', innerD);
+
+          const outerLen = outer.getTotalLength();
+          const innerLen = inner.getTotalLength();
+
+          setDash(outer, outerLen, outerLen);
+          setDash(inner, innerLen, innerLen);
+
+          if (prefersReducedMotion || typeof outer.animate !== 'function') {
+            setDash(outer, outerLen, 0);
+            setDash(inner, innerLen, 0);
+            return;
+          }
+
+          const drawOuter = outer.animate(
+            [{ strokeDashoffset: outerLen }, { strokeDashoffset: 0 }],
+            { duration: SETTINGS.draw, easing: 'ease-out', fill: 'forwards' },
+          );
+          const drawInner = inner.animate(
+            [{ strokeDashoffset: innerLen }, { strokeDashoffset: 0 }],
+            { duration: SETTINGS.draw, easing: 'ease-out', fill: 'forwards' },
+          );
+          currentAnimations = [drawOuter, drawInner];
+          await Promise.all([drawOuter.finished, drawInner.finished]);
+
+          await sleep(SETTINGS.hold);
+
+          const wipeOuter = outer.animate(
+            [{ strokeDashoffset: 0 }, { strokeDashoffset: outerLen }],
+            { duration: SETTINGS.wipe, easing: 'ease-in', fill: 'forwards' },
+          );
+          const wipeInner = inner.animate(
+            [{ strokeDashoffset: 0 }, { strokeDashoffset: innerLen }],
+            { duration: SETTINGS.wipe, easing: 'ease-in', fill: 'forwards' },
+          );
+          currentAnimations = [wipeOuter, wipeInner];
+          await Promise.all([wipeOuter.finished, wipeInner.finished]);
+
+          await sleep(SETTINGS.gap);
+        }
+      }
+
+      loop().catch(() => {
+        try {
+          cancelAnimations();
+          const { outerD, innerD } = generateA();
+          outer.setAttribute('d', outerD);
+          inner.setAttribute('d', innerD);
+          outer.style.strokeDasharray = 'none';
+          outer.style.strokeDashoffset = '0';
+          inner.style.strokeDasharray = 'none';
+          inner.style.strokeDashoffset = '0';
+        } catch {}
+      });
+    })();
+  </script>
+</body>
+</html>
